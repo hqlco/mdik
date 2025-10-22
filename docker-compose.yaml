@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  mdik-api:
+    image: mdik-api:latest
+    container_name: mdik-api
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./app:/app/app
+    environment:
+      DB_MIGRATE: ${DB_MIGRATE:-false}
+    networks:
+      - mdik-net
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.brainai-api.rule=Host(`mdik.brain-ai.tech`)"
+      - "traefik.http.routers.brainai-api.entrypoints=websecure"
+      - "traefik.http.routers.brainai-api.tls=true"
+      - "traefik.http.routers.brainai-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.brainai-api.loadbalancer.server.port=8000"
+
+networks:
+  mdik-net:
+    external: true
