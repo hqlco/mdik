@@ -2,8 +2,8 @@ import pandas as pd
 import requests
 from io import StringIO
 from sqlalchemy import create_engine
-from database import engine_main, Base_main
-from models import RideVendor1, RideVendor2
+from .database import engine_main, Base_main
+from .models import RideVendor1, RideVendor2
 
 def run_migration(s3_url: str):
     print("Downloading CSV from S3...")

@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from database import SessionLocal
-import models, crud, schemas
+from .database import SessionLocal
+from . import models, crud, schemas
 
 app = FastAPI(title="Taxi Rides API")
 
