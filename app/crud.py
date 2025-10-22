@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from . import models, schemas
-import cache
+from . import models, schemas, cache
 import json
 
 def _serialize_record(record):
