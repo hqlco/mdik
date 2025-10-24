@@ -6,7 +6,7 @@ import os
 
 load_dotenv()
 
-redis_client = redis.StrictRedis(host=os.getenv("REDIS_HOST"), port=6379, db=0, password=os.getenv("REDIS_PASSWORD"), decode_responses=True)
+redis_client = redis.StrictRedis(host=os.getenv("REDIS_HOST"), port=6379, db=0, password=os.getenv("REDIS_PASSWORD"), decode_responses=False)
 
 CACHE_TIMEOUT = timedelta(minutes=10)
 

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from .database import SessionLocal
@@ -15,12 +15,28 @@ def get_db():
 
 def register_routes(prefix: str, model):
     @app.get(f"/{prefix}")
-    def get_all_records(db: Session = Depends(get_db)):
-        return crud.get_all(db, model)
+    def get_all_records(
+        db: Session = Depends(get_db), 
+        redis: bool = Query(None), 
+        passenger_count: int = Query(None), 
+        limit: int = Query(None)
+    ):
+        if redis:
+            return crud.get_all_redis(db, model, passenger_count, limit)
+        else:
+            return crud.get_all(db, model, passenger_count, limit)
 
     @app.get(f"/{prefix}/{{record_id}}")
-    def get_record(record_id: str, db: Session = Depends(get_db)):
-        record = crud.get_by_id(db, model, record_id)
+    def get_record(
+        record_id: str, 
+        db: Session = Depends(get_db), 
+        redis: bool = Query(None)
+    ):
+        if redis:
+            record = crud.get_by_id_redis(db, model, record_id)
+        else:
+            record = crud.get_by_id(db, model, record_id)
+
         if not record:
             raise HTTPException(status_code=404, detail="Record not found")
         return record
@@ -50,9 +66,17 @@ register_routes("rides/vendor1", models.RideVendor1)
 register_routes("rides/vendor2", models.RideVendor2)
 
 @app.get("/rides")
-def get_complete_records(db: Session = Depends(get_db)):
+def get_complete_records(
+    db: Session = Depends(get_db), 
+    redis: bool = Query(None), 
+    passenger_count: int = Query(None), 
+    limit: int = Query(None)
+):
     try:
-        result = crud.get_complete_records(db)
+        if redis:
+            result = crud.get_complete_records_redis(db, passenger_count, limit)
+        else:
+            result = crud.get_complete_records(db, passenger_count, limit)
         return result
     except SQLAlchemyError as e:
         raise HTTPException(status_code=400, detail=str(e.__cause__ or e))

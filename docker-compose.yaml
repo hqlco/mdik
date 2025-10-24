@@ -10,19 +10,20 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./app:/app/app
-    environment:
-      DB_MIGRATE: ${DB_MIGRATE:-false}
     networks:
       - mdik-net
+      - brainai-net
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.brainai-api.rule=Host(`mdik.brain-ai.tech`)"
-      - "traefik.http.routers.brainai-api.entrypoints=websecure"
-      - "traefik.http.routers.brainai-api.tls=true"
-      - "traefik.http.routers.brainai-api.tls.certresolver=letsencrypt"
-      - "traefik.http.services.brainai-api.loadbalancer.server.port=8000"
+      - "traefik.http.routers.mdik-api.rule=Host(`mdik.brain-ai.tech`)"
+      - "traefik.http.routers.mdik-api.entrypoints=websecure"
+      - "traefik.http.routers.mdik-api.tls=true"
+      - "traefik.http.routers.mdik-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.mdik-api.loadbalancer.server.port=8000"
 
 networks:
   mdik-net:
+    external: true
+  brainai-net:
     external: true
