@@ -1,0 +1,73 @@
+version: '3.8'
+
+x-postgres-common:
+  &postgres-common
+  image: postgres:14-alpine
+  user: postgres
+  restart: always
+  healthcheck:
+    test: 'pg_isready -U user --dbname=postgres'
+    interval: 10s
+    timeout: 5s
+    retries: 5
+
+services:
+  mdik-db:
+    <<: *postgres-common
+    container_name: mdik-db
+    environment:
+      POSTGRES_USER: 
+      POSTGRES_DB: 
+      POSTGRES_PASSWORD: 
+      POSTGRES_HOST_AUTH_METHOD: "scram-sha-256\nhost replication all 0.0.0.0/0 md5"
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    command: |
+      postgres
+      -c wal_level=replica
+      -c hot_standby=on
+      -c max_wal_senders=10
+      -c max_replication_slots=10
+      -c hot_standby_feedback=on
+    volumes:
+      - ./00_init.sql:/docker-entrypoint-initdb.d/00_init.sql
+      - mdik_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      mdik-net:
+        ipv4_address: 10.0.0.2
+
+  mdik-rep:
+    <<: *postgres-common
+    container_name: mdik-rep
+    environment:
+      PGUSER: 
+      PGPASSWORD: 
+    command: |
+      bash -c "
+      until pg_basebackup --pgdata=/var/lib/postgresql/data -R --slot=replication_slot --host=mdik-db --port=5432
+      do
+      echo 'Waiting for primary to connect...'
+      sleep 1s
+      done
+      echo 'Backup done, starting replica...'
+      chmod 0700 /var/lib/postgresql/data
+      postgres
+      "
+    depends_on:
+      - mdik-db
+    ports:
+      - "5431:5432"
+    networks:
+      mdik-net:
+        ipv4_address: 10.0.0.3
+
+volumes:
+  mdik_data:
+
+networks:
+  mdik-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.0.0/24
